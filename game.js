@@ -18,8 +18,7 @@ let keys = {
     ArrowUp: false,
     ArrowDown: false,
     ArrowLeft: false,
-    ArrowRight: false,
-    Space: false
+    ArrowRight: false
 };
 
 document.addEventListener('keydown', (e) => {
@@ -34,6 +33,13 @@ document.addEventListener('keyup', (e) => {
     }
 });
 
+document.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    shootBullet(mouseX, mouseY);
+});
+
 function movePlayer() {
     if (keys.ArrowUp && player.y > 0) player.y -= player.speed;
     if (keys.ArrowDown && player.y < canvas.height - player.size) player.y += player.speed;
@@ -46,21 +52,23 @@ function drawPlayer() {
     ctx.fillRect(player.x, player.y, player.size, player.size);
 }
 
-function shootBullet() {
-    if (keys.Space) {
-        player.bullets.push({
-            x: player.x + player.size / 2,
-            y: player.y,
-            size: 5,
-            speed: player.bulletSpeed
-        });
-    }
+function shootBullet(mouseX, mouseY) {
+    const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+    player.bullets.push({
+        x: player.x + player.size / 2,
+        y: player.y + player.size / 2,
+        size: 5,
+        speed: player.bulletSpeed,
+        dx: Math.cos(angle) * player.bulletSpeed,
+        dy: Math.sin(angle) * player.bulletSpeed
+    });
 }
 
 function moveBullets() {
     player.bullets.forEach((bullet, index) => {
-        bullet.y -= bullet.speed;
-        if (bullet.y < 0) {
+        bullet.x += bullet.dx;
+        bullet.y += bullet.dy;
+        if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
             player.bullets.splice(index, 1);
         }
     });
@@ -192,7 +200,6 @@ function gameLoop(timestamp) {
     if (boss) moveBoss();
 
     moveBullets();
-    shootBullet();
 
     checkBulletCollisions();
     checkBossCollisions();
