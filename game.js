@@ -75,20 +75,23 @@ function drawBullets() {
 
 let enemies = [];
 let enemySpeed = 2;
-let enemySpawnRate = 1000; // Spawn a new enemy every second
+let enemySpawnRate = 2000; // Spawn a new enemy every 2 seconds
+let maxEnemies = 10; // Maximum number of enemies on screen
 let enemySpawnTimer = 0;
 let enemiesKilled = 0;
 
 function spawnEnemy() {
-    let enemy = {
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: 20,
-        color: 'red',
-        alive: true,
-        health: 3
-    };
-    enemies.push(enemy);
+    if (enemies.length < maxEnemies) {
+        let enemy = {
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: 20,
+            color: 'red',
+            alive: true,
+            health: 3
+        };
+        enemies.push(enemy);
+    }
 }
 
 function moveEnemies() {
