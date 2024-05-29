@@ -11,7 +11,8 @@ let player = {
     speed: 5,
     color: 'blue',
     bullets: [],
-    bulletSpeed: 7
+    bulletSpeed: 7,
+    health: 5
 };
 
 let keys = {
@@ -50,6 +51,12 @@ function movePlayer() {
 function drawPlayer() {
     ctx.fillStyle = player.color;
     ctx.fillRect(player.x, player.y, player.size, player.size);
+
+    // Draw player health bar
+    ctx.fillStyle = 'red';
+    ctx.fillRect(player.x, player.y - 10, player.size, 5);
+    ctx.fillStyle = 'green';
+    ctx.fillRect(player.x, player.y - 10, player.size * (player.health / 5), 5);
 }
 
 function shootBullet(mouseX, mouseY) {
@@ -110,6 +117,11 @@ function moveEnemies() {
         if (distance < player.size + enemy.size) {
             enemy.alive = false;
             enemiesKilled++;
+            player.health--;
+            if (player.health <= 0) {
+                alert("Game Over");
+                document.location.reload();
+            }
         } else {
             enemy.x += (dx / distance) * enemySpeed;
             enemy.y += (dy / distance) * enemySpeed;
@@ -122,6 +134,12 @@ function drawEnemies() {
     enemies.forEach(enemy => {
         ctx.fillStyle = enemy.color;
         ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+
+        // Draw enemy health bar
+        ctx.fillStyle = 'red';
+        ctx.fillRect(enemy.x, enemy.y - 10, enemy.size, 5);
+        ctx.fillStyle = 'green';
+        ctx.fillRect(enemy.x, enemy.y - 10, enemy.size * (enemy.health / 3), 5);
     });
 }
 
@@ -170,6 +188,12 @@ function drawBoss() {
     if (boss) {
         ctx.fillStyle = boss.color;
         ctx.fillRect(boss.x, boss.y, boss.size, boss.size);
+
+        // Draw boss health bar
+        ctx.fillStyle = 'red';
+        ctx.fillRect(boss.x, boss.y - 10, boss.size, 5);
+        ctx.fillStyle = 'green';
+        ctx.fillRect(boss.x, boss.y - 10, boss.size * (boss.health / bossHealth), 5);
     }
 }
 
