@@ -13,14 +13,20 @@ let player = {
     bullets: [],
     bulletSpeed: 7,
     health: 5,
-    damage: 1
+    damage: 1,
+    explosiveBullets: false,
+    chainLightning: false
 };
 
 let keys = {
     ArrowUp: false,
     ArrowDown: false,
     ArrowLeft: false,
-    ArrowRight: false
+    ArrowRight: false,
+    KeyW: false,
+    KeyA: false,
+    KeyS: false,
+    KeyD: false
 };
 
 document.addEventListener('keydown', (e) => {
@@ -47,10 +53,10 @@ document.addEventListener('click', (e) => {
 });
 
 function movePlayer() {
-    if (keys.ArrowUp && player.y > 0) player.y -= player.speed;
-    if (keys.ArrowDown && player.y < canvas.height - player.size) player.y += player.speed;
-    if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
-    if (keys.ArrowRight && player.x < canvas.width - player.size) player.x += player.speed;
+    if ((keys.ArrowUp || keys.KeyW) && player.y > 0) player.y -= player.speed;
+    if ((keys.ArrowDown || keys.KeyS) && player.y < canvas.height - player.size) player.y += player.speed;
+    if ((keys.ArrowLeft || keys.KeyA) && player.x > 0) player.x -= player.speed;
+    if ((keys.ArrowRight || keys.KeyD) && player.x < canvas.width - player.size) player.x += player.speed;
 }
 
 function drawPlayer() {
