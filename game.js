@@ -66,8 +66,11 @@ function drawPlayer() {
     // Draw player health bar
     ctx.fillStyle = 'red';
     ctx.fillRect(player.x, player.y - 10, player.size, 5);
+
+    // Calculate the width of the green health bar based on player's health
+    let healthBarWidth = Math.max(0, (player.size * player.health) / 5); // Ensure health bar width is not negative
     ctx.fillStyle = 'green';
-    ctx.fillRect(player.x, player.y - 10, player.size * (player.health / 5), 5);
+    ctx.fillRect(player.x, player.y - 10, healthBarWidth, 5);
 }
 
 function shootBullet(mouseX, mouseY) {
@@ -134,7 +137,8 @@ function moveEnemies() {
             enemiesKilled++;
             player.health--;
             if (player.health <= 0) {
-                showGameOverScreen();
+                alert("Game Over");
+                document.location.reload();
             }
         } else {
             enemy.x += (dx / distance) * enemySpeed;
