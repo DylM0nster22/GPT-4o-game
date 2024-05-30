@@ -231,6 +231,7 @@ function checkBossCollisions() {
                     if (boss.health <= 0) {
                         boss = null;
                         showUpgradeScreen = true;
+                        getRandomUpgrades();
                     }
                 }
             }
@@ -242,7 +243,7 @@ let upgrades = [
     { name: 'Increase Bullet Speed', effect: () => player.bulletSpeed += 2 },
     { name: 'Increase Player Speed', effect: () => player.speed += 1 },
     { name: 'Increase Player Health', effect: () => player.health += 1 },
-    { name: 'Increase Damage', effect: () => player.damage += 1 },
+    { name: 'Increase Damage', effect: () => player.damage *= 2 },
     { name: 'Explosive Bullets', effect: () => player.explosiveBullets = true },
     { name: 'Chain Lightning', effect: () => player.chainLightning = true }
 ];
@@ -291,11 +292,11 @@ let showUpgradeScreen = false;
 
 function getRandomUpgrades() {
     chosenUpgrades = [];
-    while (chosenUpgrades.length < 5) {
-        const upgrade = upgrades[Math.floor(Math.random() * upgrades.length)];
-        if (!chosenUpgrades.includes(upgrade)) {
-            chosenUpgrades.push(upgrade);
-        }
+    const availableUpgrades = [...upgrades]; // Copy the upgrades array
+    while (chosenUpgrades.length < 3) {
+        const index = Math.floor(Math.random() * availableUpgrades.length);
+        const upgrade = availableUpgrades.splice(index, 1)[0];
+        chosenUpgrades.push(upgrade);
     }
 }
 
@@ -364,5 +365,4 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
-getRandomUpgrades();
 requestAnimationFrame(gameLoop);
