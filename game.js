@@ -66,15 +66,18 @@ function drawPlayer() {
 
 function shootBullet(mouseX, mouseY) {
     const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
-    player.bullets.push({
+    const bullet = {
         x: player.x + player.size / 2,
         y: player.y + player.size / 2,
         size: 5,
         speed: player.bulletSpeed,
         dx: Math.cos(angle) * player.bulletSpeed,
         dy: Math.sin(angle) * player.bulletSpeed,
-        damage: player.damage
-    });
+        damage: player.damage,
+        explosive: player.explosiveBullets || false,
+        chainLightning: player.chainLightning || false
+    };
+    player.bullets.push(bullet);
 }
 
 function moveBullets() {
@@ -157,6 +160,12 @@ function checkBulletCollisions() {
             let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < bullet.size + enemy.size) {
                 enemy.health -= bullet.damage;
+                if (bullet.explosive) {
+                    checkExplosiveDamage(bullet, enemy);
+                }
+                if (bullet.chainLightning) {
+                    checkChainLightningDamage(bullet, enemy);
+                }
                 player.bullets.splice(bIndex, 1);
                 if (enemy.health <= 0) {
                     enemy.alive = false;
@@ -206,15 +215,17 @@ function drawBoss() {
 function checkBossCollisions() {
     if (boss) {
         player.bullets.forEach((bullet, bIndex) => {
-            let dx = bullet.x - boss.x;
-            let dy = bullet.y - boss.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < bullet.size + boss.size) {
-                boss.health -= bullet.damage;
-                player.bullets.splice(bIndex, 1);
-                if (boss.health <= 0) {
-                    boss = null;
-                    showUpgradeScreen = true;
+            if (boss) {
+                let dx = bullet.x - boss.x;
+                let dy = bullet.y - boss.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < bullet.size + boss.size) {
+                    boss.health -= bullet.damage;
+                    player.bullets.splice(bIndex, 1);
+                    if (boss.health <= 0) {
+                        boss = null;
+                        showUpgradeScreen = true;
+                    }
                 }
             }
         });
@@ -226,31 +237,39 @@ let upgrades = [
     { name: 'Increase Player Speed', effect: () => player.speed += 1 },
     { name: 'Increase Player Health', effect: () => player.health += 1 },
     { name: 'Increase Damage', effect: () => player.damage *= 2 },
-    { name: 'Explosive Bullets', effect: applyExplosiveBullets },
-    { name: 'Chain Lightning', effect: applyChainLightning }
+    { name: 'Explosive Bullets', effect: () => player.explosiveBullets = true },
+    { name: 'Chain Lightning', effect: () => player.chainLightning = true }
 ];
 
-function applyExplosiveBullets() {
-    player.bullets.forEach(bullet => {
-        bullet.explosive = true;
-    });
-}
-
-function applyChainLightning() {
-    player.bullets.forEach(bullet => {
-        bullet.chainLightning = true;
-    });
-}
-
 function checkExplosiveDamage(bullet, enemy) {
-    if (bullet.explosive) {
+    enemies.forEach(otherEnemy => {
+        if (otherEnemy !== enemy) {
+            let dx = bullet.x - otherEnemy.x;
+            let dy = bullet.y - otherEnemy.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < bullet.size * 5) { // Explosion radius
+                otherEnemy.health -= bullet.damage;
+                if (otherEnemy.health <= 0) {
+                    otherEnemy.alive = false;
+                    enemiesKilled++;
+                }
+            }
+        }
+    });
+}
+
+function checkChainLightningDamage(bullet, enemy) {
+    let chainedEnemies = [enemy];
+    for (let i = 0; i < chainedEnemies.length; i++) {
+        let currentEnemy = chainedEnemies[i];
         enemies.forEach(otherEnemy => {
-            if (otherEnemy !== enemy) {
-                let dx = bullet.x - otherEnemy.x;
-                let dy = bullet.y - otherEnemy.y;
+            if (!chainedEnemies.includes(otherEnemy)) {
+                let dx = currentEnemy.x - otherEnemy.x;
+                let dy = currentEnemy.y - otherEnemy.y;
                 let distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < bullet.size * 5) { // Explosion radius
+                if (distance < bullet.size * 10) { // Chain lightning radius
                     otherEnemy.health -= bullet.damage;
+                    chainedEnemies.push(otherEnemy);
                     if (otherEnemy.health <= 0) {
                         otherEnemy.alive = false;
                         enemiesKilled++;
@@ -258,30 +277,6 @@ function checkExplosiveDamage(bullet, enemy) {
                 }
             }
         });
-    }
-}
-
-function checkChainLightningDamage(bullet, enemy) {
-    if (bullet.chainLightning) {
-        let chainedEnemies = [enemy];
-        for (let i = 0; i < chainedEnemies.length; i++) {
-            let currentEnemy = chainedEnemies[i];
-            enemies.forEach(otherEnemy => {
-                if (!chainedEnemies.includes(otherEnemy)) {
-                    let dx = currentEnemy.x - otherEnemy.x;
-                    let dy = currentEnemy.y - otherEnemy.y;
-                    let distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance < bullet.size * 10) { // Chain lightning radius
-                        otherEnemy.health -= bullet.damage;
-                        chainedEnemies.push(otherEnemy);
-                        if (otherEnemy.health <= 0) {
-                            otherEnemy.alive = false;
-                            enemiesKilled++;
-                        }
-                    }
-                }
-            });
-        }
     }
 }
 
