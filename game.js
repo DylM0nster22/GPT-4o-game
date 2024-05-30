@@ -66,11 +66,8 @@ function drawPlayer() {
     // Draw player health bar
     ctx.fillStyle = 'red';
     ctx.fillRect(player.x, player.y - 10, player.size, 5);
-
-    // Calculate the width of the green health bar based on player's health
-    let healthBarWidth = Math.max(0, (player.size * player.health) / 5); // Ensure health bar width is not negative
     ctx.fillStyle = 'green';
-    ctx.fillRect(player.x, player.y - 10, healthBarWidth, 5);
+    ctx.fillRect(player.x, player.y - 10, player.size * (player.health / 5), 5);
 }
 
 function shootBullet(mouseX, mouseY) {
@@ -336,57 +333,6 @@ function resetGameForNextRound() {
     spawnBoss();
 }
 
-function showGameOverScreen() {
-    document.getElementById('gameOverScreen').style.display = 'block';
-}
-
-function restartGame() {
-    // Reset game variables and state here
-    player = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        size: 20,
-        speed: 5,
-        color: 'blue',
-        bullets: [],
-        bulletSpeed: 7,
-        health: 5,
-        damage: 1,
-        explosiveBullets: false,
-        chainLightning: false
-    };
-    keys = {
-        ArrowUp: false,
-        ArrowDown: false,
-        ArrowLeft: false,
-        ArrowRight: false,
-        KeyW: false,
-        KeyA: false,
-        KeyS: false,
-        KeyD: false
-    };
-    enemies = [];
-    enemySpeed = 2;
-    enemySpawnRate = 2000;
-    maxEnemies = 10;
-    enemySpawnTimer = 0;
-    enemiesKilled = 0;
-    boss = null;
-    bossHealth = 100;
-    chosenUpgrades = [];
-    showUpgradeScreen = false;
-
-    document.getElementById('gameOverScreen').style.display = 'none';
-    getRandomUpgrades();
-    requestAnimationFrame(gameLoop);
-}
-
-function checkPlayerStatus() {
-    if (player.health <= 0) {
-        showGameOverScreen();
-    }
-}
-
 function gameLoop(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -414,8 +360,6 @@ function gameLoop(timestamp) {
             enemySpawnTimer = 0;
         }
     }
-
-    checkPlayerStatus();
 
     requestAnimationFrame(gameLoop);
 }
