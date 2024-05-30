@@ -134,8 +134,7 @@ function moveEnemies() {
             enemiesKilled++;
             player.health--;
             if (player.health <= 0) {
-                alert("Game Over");
-                document.location.reload();
+                showGameOverScreen();
             }
         } else {
             enemy.x += (dx / distance) * enemySpeed;
@@ -333,6 +332,57 @@ function resetGameForNextRound() {
     spawnBoss();
 }
 
+function showGameOverScreen() {
+    document.getElementById('gameOverScreen').style.display = 'block';
+}
+
+function restartGame() {
+    // Reset game variables and state here
+    player = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        size: 20,
+        speed: 5,
+        color: 'blue',
+        bullets: [],
+        bulletSpeed: 7,
+        health: 5,
+        damage: 1,
+        explosiveBullets: false,
+        chainLightning: false
+    };
+    keys = {
+        ArrowUp: false,
+        ArrowDown: false,
+        ArrowLeft: false,
+        ArrowRight: false,
+        KeyW: false,
+        KeyA: false,
+        KeyS: false,
+        KeyD: false
+    };
+    enemies = [];
+    enemySpeed = 2;
+    enemySpawnRate = 2000;
+    maxEnemies = 10;
+    enemySpawnTimer = 0;
+    enemiesKilled = 0;
+    boss = null;
+    bossHealth = 100;
+    chosenUpgrades = [];
+    showUpgradeScreen = false;
+
+    document.getElementById('gameOverScreen').style.display = 'none';
+    getRandomUpgrades();
+    requestAnimationFrame(gameLoop);
+}
+
+function checkPlayerStatus() {
+    if (player.health <= 0) {
+        showGameOverScreen();
+    }
+}
+
 function gameLoop(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -360,6 +410,8 @@ function gameLoop(timestamp) {
             enemySpawnTimer = 0;
         }
     }
+
+    checkPlayerStatus();
 
     requestAnimationFrame(gameLoop);
 }
