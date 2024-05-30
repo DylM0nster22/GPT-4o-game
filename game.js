@@ -12,7 +12,8 @@ let player = {
     color: 'blue',
     bullets: [],
     bulletSpeed: 7,
-    health: 5
+    health: 5,
+    damage: 1
 };
 
 let keys = {
@@ -38,7 +39,11 @@ document.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    shootBullet(mouseX, mouseY);
+    if (showUpgradeScreen) {
+        handleUpgradeClick(mouseX, mouseY);
+    } else {
+        shootBullet(mouseX, mouseY);
+    }
 });
 
 function movePlayer() {
@@ -67,7 +72,8 @@ function shootBullet(mouseX, mouseY) {
         size: 5,
         speed: player.bulletSpeed,
         dx: Math.cos(angle) * player.bulletSpeed,
-        dy: Math.sin(angle) * player.bulletSpeed
+        dy: Math.sin(angle) * player.bulletSpeed,
+        damage: player.damage
     });
 }
 
@@ -150,7 +156,7 @@ function checkBulletCollisions() {
             let dy = bullet.y - enemy.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < bullet.size + enemy.size) {
-                enemy.health--;
+                enemy.health -= bullet.damage;
                 player.bullets.splice(bIndex, 1);
                 if (enemy.health <= 0) {
                     enemy.alive = false;
@@ -204,42 +210,158 @@ function checkBossCollisions() {
             let dy = bullet.y - boss.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < bullet.size + boss.size) {
-                boss.health--;
+                boss.health -= bullet.damage;
                 player.bullets.splice(bIndex, 1);
                 if (boss.health <= 0) {
                     boss = null;
-                    enemiesKilled = 0; // Reset the kill count for the next boss
+                    showUpgradeScreen = true;
                 }
             }
         });
     }
 }
 
+let upgrades = [
+    { name: 'Increase Bullet Speed', effect: () => player.bulletSpeed += 2 },
+    { name: 'Increase Player Speed', effect: () => player.speed += 1 },
+    { name: 'Increase Player Health', effect: () => player.health += 1 },
+    { name: 'Increase Damage', effect: () => player.damage *= 2 },
+    { name: 'Explosive Bullets', effect: applyExplosiveBullets },
+    { name: 'Chain Lightning', effect: applyChainLightning }
+];
+
+function applyExplosiveBullets() {
+    player.bullets.forEach(bullet => {
+        bullet.explosive = true;
+    });
+}
+
+function applyChainLightning() {
+    player.bullets.forEach(bullet => {
+        bullet.chainLightning = true;
+    });
+}
+
+function checkExplosiveDamage(bullet, enemy) {
+    if (bullet.explosive) {
+        enemies.forEach(otherEnemy => {
+            if (otherEnemy !== enemy) {
+                let dx = bullet.x - otherEnemy.x;
+                let dy = bullet.y - otherEnemy.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < bullet.size * 5) { // Explosion radius
+                    otherEnemy.health -= bullet.damage;
+                    if (otherEnemy.health <= 0) {
+                        otherEnemy.alive = false;
+                        enemiesKilled++;
+                    }
+                }
+            }
+        });
+    }
+}
+
+function checkChainLightningDamage(bullet, enemy) {
+    if (bullet.chainLightning) {
+        let chainedEnemies = [enemy];
+        for (let i = 0; i < chainedEnemies.length; i++) {
+            let currentEnemy = chainedEnemies[i];
+            enemies.forEach(otherEnemy => {
+                if (!chainedEnemies.includes(otherEnemy)) {
+                    let dx = currentEnemy.x - otherEnemy.x;
+                    let dy = currentEnemy.y - otherEnemy.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < bullet.size * 10) { // Chain lightning radius
+                        otherEnemy.health -= bullet.damage;
+                        chainedEnemies.push(otherEnemy);
+                        if (otherEnemy.health <= 0) {
+                            otherEnemy.alive = false;
+                            enemiesKilled++;
+                        }
+                    }
+                }
+            });
+        }
+    }
+}
+
+let chosenUpgrades = [];
+let showUpgradeScreen = false;
+
+function getRandomUpgrades() {
+    chosenUpgrades = [];
+    while (chosenUpgrades.length < 3) {
+        const upgrade = upgrades[Math.floor(Math.random() * upgrades.length)];
+        if (!chosenUpgrades.includes(upgrade)) {
+            chosenUpgrades.push(upgrade);
+        }
+    }
+}
+
+function drawUpgradeScreen() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = 'white';
+    ctx.font = '30px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Choose an Upgrade', canvas.width / 2, 100);
+
+    chosenUpgrades.forEach((upgrade, index) => {
+        ctx.fillText(upgrade.name, canvas.width / 2, 200 + index * 100);
+    });
+}
+
+function handleUpgradeClick(mouseX, mouseY) {
+    chosenUpgrades.forEach((upgrade, index) => {
+        const upgradeY = 200 + index * 100;
+        if (mouseY > upgradeY - 20 && mouseY < upgradeY + 20) {
+            upgrade.effect();
+            showUpgradeScreen = false;
+            resetGameForNextRound();
+        }
+    });
+}
+
+function resetGameForNextRound() {
+    enemies = [];
+    enemySpeed += 0.5;
+    maxEnemies += 5;
+    bossHealth += 50;
+    enemiesKilled = 0;
+    spawnBoss();
+}
+
 function gameLoop(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    movePlayer();
-    moveEnemies();
-    if (enemiesKilled >= 50 && !boss) spawnBoss();
-    if (boss) moveBoss();
+    if (showUpgradeScreen) {
+        drawUpgradeScreen();
+    } else {
+        movePlayer();
+        moveEnemies();
+        if (enemiesKilled >= 50 && !boss) spawnBoss();
+        if (boss) moveBoss();
 
-    moveBullets();
+        moveBullets();
 
-    checkBulletCollisions();
-    checkBossCollisions();
+        checkBulletCollisions();
+        checkBossCollisions();
 
-    drawPlayer();
-    drawEnemies();
-    drawBullets();
-    drawBoss();
+        drawPlayer();
+        drawEnemies();
+        drawBullets();
+        drawBoss();
 
-    enemySpawnTimer += timestamp;
-    if (enemySpawnTimer > enemySpawnRate) {
-        spawnEnemy();
-        enemySpawnTimer = 0;
+        enemySpawnTimer += timestamp;
+        if (enemySpawnTimer > enemySpawnRate) {
+            spawnEnemy();
+            enemySpawnTimer = 0;
+        }
     }
 
     requestAnimationFrame(gameLoop);
 }
 
+getRandomUpgrades();
 requestAnimationFrame(gameLoop);
