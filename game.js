@@ -29,6 +29,8 @@ let keys = {
     KeyD: false
 };
 
+let gameState = 'playing'; // 'playing', 'gameOver', 'upgrade'
+
 document.addEventListener('keydown', (e) => {
     if (keys.hasOwnProperty(e.code)) {
         keys[e.code] = true;
@@ -45,10 +47,14 @@ document.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    if (showUpgradeScreen) {
+    if (gameState === 'upgrade') {
         handleUpgradeClick(mouseX, mouseY);
-    } else {
+    } else if (gameState === 'playing') {
         shootBullet(mouseX, mouseY);
+    } else if (gameState === 'gameOver') {
+        if (mouseX > canvas.width / 2 - 50 && mouseX < canvas.width / 2 + 50 && mouseY > canvas.height / 2 - 25 && mouseY < canvas.height / 2 + 25) {
+            resetGame();
+        }
     }
 });
 
@@ -134,8 +140,7 @@ function moveEnemies() {
             enemiesKilled++;
             player.health--;
             if (player.health <= 0) {
-                alert("Game Over");
-                document.location.reload();
+                gameState = 'gameOver';
             }
         } else {
             enemy.x += (dx / distance) * enemySpeed;
@@ -230,7 +235,7 @@ function checkBossCollisions() {
                     player.bullets.splice(bIndex, 1);
                     if (boss.health <= 0) {
                         boss = null;
-                        showUpgradeScreen = true;
+                        gameState = 'upgrade';
                         getRandomUpgrades();
                     }
                 }
@@ -288,7 +293,6 @@ function checkChainLightningDamage(bullet, enemy) {
 }
 
 let chosenUpgrades = [];
-let showUpgradeScreen = false;
 
 function getRandomUpgrades() {
     chosenUpgrades = [];
@@ -319,10 +323,23 @@ function handleUpgradeClick(mouseX, mouseY) {
         const upgradeY = 200 + index * 100;
         if (mouseY > upgradeY - 20 && mouseY < upgradeY + 20) {
             upgrade.effect();
-            showUpgradeScreen = false;
+            gameState = 'playing';
             resetGameForNextRound();
         }
     });
+}
+
+function drawGameOverScreen() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = 'white';
+    ctx.font = '30px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 50);
+    ctx.fillText('Restart', canvas.width / 2, canvas.height / 2);
+    ctx.strokeStyle = 'white';
+    ctx.strokeRect(canvas.width / 2 - 50, canvas.height / 2 - 25, 100, 50);
 }
 
 function resetGameForNextRound() {
@@ -334,11 +351,38 @@ function resetGameForNextRound() {
     spawnBoss();
 }
 
+function resetGame() {
+    player = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        size: 20,
+        speed: 5,
+        color: 'blue',
+        bullets: [],
+        bulletSpeed: 7,
+        health: 5,
+        damage: 1,
+        explosiveBullets: false,
+        chainLightning: false
+    };
+    enemies = [];
+    enemySpeed = 2;
+    enemySpawnRate = 2000;
+    maxEnemies = 10;
+    enemySpawnTimer = 0;
+    enemiesKilled = 0;
+    boss = null;
+    bossHealth = 100;
+    gameState = 'playing';
+}
+
 function gameLoop(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (showUpgradeScreen) {
+    if (gameState === 'upgrade') {
         drawUpgradeScreen();
+    } else if (gameState === 'gameOver') {
+        drawGameOverScreen();
     } else {
         movePlayer();
         moveEnemies();
