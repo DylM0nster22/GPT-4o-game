@@ -30,6 +30,8 @@ let keys = {
 };
 
 let gameState = 'playing'; // 'playing', 'gameOver', 'upgrade'
+let startTime = Date.now();
+let elapsedTime = 0;
 
 document.addEventListener('keydown', (e) => {
     if (keys.hasOwnProperty(e.code)) {
@@ -237,6 +239,7 @@ function checkBossCollisions() {
                         boss = null;
                         gameState = 'upgrade';
                         getRandomUpgrades();
+                        enemiesKilled = 0; // Reset the kill count for the next boss
                     }
                 }
             }
@@ -342,12 +345,20 @@ function drawGameOverScreen() {
     ctx.strokeRect(canvas.width / 2 - 50, canvas.height / 2 - 25, 100, 50);
 }
 
+function drawGameInfo() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(`Enemies Killed: ${enemiesKilled}`, canvas.width - 10, 20);
+    ctx.fillText(`Time Played: ${(elapsedTime / 1000).toFixed(1)}s`, canvas.width - 10, 40);
+    ctx.fillText(`Player Health: ${player.health}`, canvas.width - 10, 60);
+}
+
 function resetGameForNextRound() {
     enemies = [];
     enemySpeed += 0.5;
     maxEnemies += 5;
     bossHealth += 50;
-    enemiesKilled = 0; // Reset enemies killed to ensure boss doesn't spawn immediately
     spawnBoss();
 }
 
@@ -373,11 +384,13 @@ function resetGame() {
     enemiesKilled = 0;
     boss = null;
     bossHealth = 100;
+    startTime = Date.now();
     gameState = 'playing';
 }
 
 function gameLoop(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    elapsedTime = Date.now() - startTime;
 
     if (gameState === 'upgrade') {
         drawUpgradeScreen();
@@ -398,6 +411,7 @@ function gameLoop(timestamp) {
         drawEnemies();
         drawBullets();
         drawBoss();
+        drawGameInfo();
 
         enemySpawnTimer += timestamp;
         if (enemySpawnTimer > enemySpawnRate) {
