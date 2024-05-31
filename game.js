@@ -32,6 +32,7 @@ let keys = {
 let gameState = 'playing'; // 'playing', 'gameOver', 'upgrade'
 let startTime = Date.now();
 let elapsedTime = 0;
+let bossDefeated = false;
 
 document.addEventListener('keydown', (e) => {
     if (keys.hasOwnProperty(e.code)) {
@@ -117,6 +118,7 @@ let enemySpawnRate = 2000; // Spawn a new enemy every 2 seconds
 let maxEnemies = 10; // Maximum number of enemies on screen
 let enemySpawnTimer = 0;
 let enemiesKilled = 0;
+const enemiesToKillForBoss = 50; // Number of enemies to kill before boss spawns
 
 function spawnEnemy() {
     if (enemies.length < maxEnemies) {
@@ -240,6 +242,7 @@ function checkBossCollisions() {
                         gameState = 'upgrade';
                         getRandomUpgrades();
                         enemiesKilled = 0; // Reset the kill count for the next boss
+                        bossDefeated = true; // Set the boss defeated flag
                     }
                 }
             }
@@ -359,7 +362,7 @@ function resetGameForNextRound() {
     enemySpeed += 0.5;
     maxEnemies += 5;
     bossHealth += 50;
-    spawnBoss();
+    bossDefeated = false; // Reset the boss defeated flag
 }
 
 function resetGame() {
@@ -386,6 +389,7 @@ function resetGame() {
     bossHealth = 100;
     startTime = Date.now();
     gameState = 'playing';
+    bossDefeated = false;
 }
 
 function gameLoop(timestamp) {
@@ -399,7 +403,9 @@ function gameLoop(timestamp) {
     } else {
         movePlayer();
         moveEnemies();
-        if (enemiesKilled >= 50 && !boss) spawnBoss();
+        if (!bossDefeated && enemiesKilled >= enemiesToKillForBoss && !boss) {
+            spawnBoss();
+        }
         if (boss) moveBoss();
 
         moveBullets();
