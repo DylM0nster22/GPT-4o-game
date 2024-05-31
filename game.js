@@ -347,7 +347,7 @@ function resetGameForNextRound() {
     enemySpeed += 0.5;
     maxEnemies += 5;
     bossHealth += 50;
-    enemiesKilled = 0;
+    enemiesKilled = 0; // Reset enemies killed to ensure boss doesn't spawn immediately
     spawnBoss();
 }
 
